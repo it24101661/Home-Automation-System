@@ -1,0 +1,67 @@
+#include "DHT.h"
+#include <Wire.h>
+#include <ESP32Servo.h>  // Include the library for Servo motor
+
+#define DPIN 2           // Pin to connect DHT sensor (GPIO number)
+#define DTYPE DHT11      // Define DHT11 or DHT22 sensor type
+
+#define echoPin 18       // Pin for ultrasonic sensor echo
+#define trigPin 5        // Pin for ultrasonic sensor trigger
+#define servoPin 14      // Pin for the servo signal
+
+DHT dht(DPIN, DTYPE);
+Servo myServo;           // Create Servo object
+
+long duration, distance;
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(115200);          
+  // Initialize the DHT sensor
+  dht.begin();
+  // Set up pins for ultrasonic sensor
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  // Attach the servo motor to the specified pin
+  myServo.attach(servoPin);
+  myServo.write(0);  // Set servo to initial position (0 degrees)
+}
+
+void loop() {
+  // Read temperature and humidity from DHT11
+  float tc = dht.readTemperature(false);  // Read temperature in Celsius
+  float tf = dht.readTemperature(true);   // Read temperature in Fahrenheit
+  float hu = dht.readHumidity();          // Read humidity
+
+  // Print temperature and humidity values
+  Serial.print("Temp: ");
+  Serial.print(tc);
+  Serial.print(" C, ");
+  Serial.print(tf);
+  Serial.print(" F, Hum: ");
+  Serial.print(hu);
+  Serial.println("%");
+
+  // Measure distance using the ultrasonic sensor
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration / 58.2;  // Convert time to distance (in cm)
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // Control servo motor based on distance
+  if (distance > 0 && distance <= 100) {
+    myServo.write(45);  // Rotate servo to 45 degrees if object is within 100 cm
+  } else {
+    myServo.write(0);   // Reset servo to 0 degrees if no object is close
+  }
+
+  delay(1000);  // Delay between readings
+} 
