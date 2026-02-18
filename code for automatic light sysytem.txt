@@ -1,0 +1,51 @@
+// LDR connected to analog pin GPIO34
+const int pirPin = 25;        // PIR sensor connected to digital pin GPIO25
+const int motionLedPin = 13;  // LED connected to digital pin GPIO13
+
+int pirState = LOW;           // Variable to store PIR motion state
+int previousPirState = LOW;   // To store the previous state of PIR
+
+// Set PIR sensor delay and debounce time (to avoid false triggering)
+const unsigned long debounceTime = 1000; // 1 second debounce time
+unsigned long lastMotionTime = 0;        // Variable to store last motion detection time
+unsigned long motionDelay = 1000;        // Delay before reacting to motion (1 second)
+
+void setup() {
+  // Initialize the serial monitor for debugging
+  Serial.begin(115200);
+
+  // Set PIR and LED pins
+  pinMode(pirPin, INPUT);
+  pinMode(motionLedPin, OUTPUT);
+  
+  // Initialize the LED as OFF
+  digitalWrite(motionLedPin, LOW);
+}
+
+void loop() {
+  pirState = digitalRead(pirPin);
+  Serial.print("PIR State: ");
+  Serial.println(pirState);
+
+  unsigned long currentMillis = millis();
+
+  if (pirState == HIGH && (currentMillis - lastMotionTime > motionDelay)) {
+    if (previousPirState == LOW) {
+      Serial.println("Motion Detected!");
+      digitalWrite(motionLedPin, HIGH);  // Turn on the LED
+      lastMotionTime = currentMillis; 
+      previousPirState = HIGH;
+    }
+  } else if (pirState == LOW && (currentMillis - lastMotionTime > motionDelay)) {
+    if (previousPirState == HIGH) {
+      Serial.println("Motion Stopped!");
+      digitalWrite(motionLedPin, LOW);  // Turn off the LED
+      lastMotionTime = currentMillis; 
+      previousPirState = LOW;
+    }
+  }
+
+  delay(1000);  // Small delay for stability
+}
+
+
